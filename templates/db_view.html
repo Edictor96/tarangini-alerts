@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DB View - Disaster Alerts</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f9fafb; }
+    h1 { color: #1e3a8a; }
+    form { margin-bottom: 20px; }
+    input[type=text] { width: 80%; padding: 8px; }
+    button { padding: 8px 12px; background: #1e3a8a; color: white; border: none; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #1e3a8a; color: white; }
+    tr:nth-child(even) { background: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>📊 Database View: Alerts Table</h1>
+
+  <!-- Query Box -->
+  <form method="post" action="/run-query">
+    <input type="text" name="query" placeholder="Enter SQL query, e.g. SELECT * FROM alert;" required>
+    <button type="submit">Run Query</button>
+  </form>
+
+  {% if columns %}
+    <h2>Query Results:</h2>
+    <table>
+      <thead>
+        <tr>
+          {% for c in columns %}
+            <th>{{c}}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for cell in row %}
+              <td>{{cell}}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <h2>Default Alerts Table:</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Source</th>
+          <th>Severity</th>
+          <th>Title</th>
+          <th>Message</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+          <tr>
+            <td>{{a.id}}</td>
+            <td>{{a.source}}</td>
+            <td>{{a.severity}}</td>
+            <td>{{a.title}}</td>
+            <td>{{a.message}}</td>
+            <td>{{a.time}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</body>
+</html>
