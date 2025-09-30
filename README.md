@@ -1,4 +1,4 @@
-# Taranगini — Disaster Alert Demo
+# Taranगini — Disaster Management Demo
 
 ## Run locally
 1. python -m venv .venv
