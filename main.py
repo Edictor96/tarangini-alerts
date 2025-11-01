@@ -1,5 +1,6 @@
 # main.py
 import os
+import sys
 import json
 import logging
 import math
@@ -221,10 +222,10 @@ def refresh_alerts():
     try:
         logger.info("Running scraper to fetch fresh alerts...")
         result = subprocess.run(
-            ["python", "incois_scraper.py"],
+            [sys.executable, "incois_scraper.py"],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=120
         )
         
         if result.returncode != 0:
@@ -250,7 +251,7 @@ def refresh_alerts():
         logger.error("Scraper timeout")
         return JSONResponse({
             "ok": False,
-            "message": "Scraper timeout (>60s)"
+            "message": "Scraper timeout (>120s)"
         }, status_code=500)
     except Exception as e:
         set_last_error(e)

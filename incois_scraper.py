@@ -192,7 +192,7 @@ class INCOISScraper:
         try:
             logger.info(f"Trying RSS feed: {feed_url}")
             
-            response = self.session.get(feed_url, timeout=15, verify=False)
+            response = self.session.get(feed_url, timeout=15)
             if response.status_code == 200:
                 feed = feedparser.parse(response.content)
                 
@@ -242,7 +242,7 @@ class INCOISScraper:
         try:
             logger.info(f"Scraping webpage: {url}")
             
-            response = self.session.get(url, timeout=20, verify=False)
+            response = self.session.get(url, timeout=20)
             if response.status_code != 200:
                 return alerts
                 
