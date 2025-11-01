@@ -1,0 +1,9 @@
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+sqlmodel>=0.0.14
+jinja2>=3.1.2
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+geopy>=2.4.0
+feedparser>=6.0.10
+lxml>=4.9.3
