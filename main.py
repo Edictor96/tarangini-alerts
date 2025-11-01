@@ -153,7 +153,7 @@ def load_alerts_from_json(file_path: str = "alerts.json"):
         return {"inserted": inserted, "skipped": skipped, "skipped_details": skipped_details}
     except Exception as e:
         set_last_error(e)
-        return {"error": str(e), "trace": last_error.get("trace")}
+        return {"error": str(e)}
 
 # ---------------- routes ----------------
 
@@ -232,19 +232,25 @@ def refresh_alerts():
             logger.error(f"Scraper failed: {result.stderr}")
             return JSONResponse({
                 "ok": False, 
-                "message": "Scraper failed",
-                "stderr": result.stderr
+                "message": "Scraper failed - check server logs for details"
             }, status_code=500)
         
         # Now reload the alerts from the updated JSON file
         load_result = load_alerts_from_json("alerts.json")
         logger.info("Successfully refreshed alerts from scraper")
         
+        # Don't expose internal error details to users
+        if "error" in load_result:
+            return JSONResponse({
+                "ok": False,
+                "message": "Failed to load alerts - check server logs"
+            }, status_code=500)
+        
         return {
             "ok": True,
             "message": "Alerts refreshed successfully",
-            "scraper_output": result.stdout,
-            "load_result": load_result
+            "inserted": load_result.get("inserted", 0),
+            "skipped": load_result.get("skipped", 0)
         }
         
     except subprocess.TimeoutExpired:
@@ -257,7 +263,7 @@ def refresh_alerts():
         set_last_error(e)
         return JSONResponse({
             "ok": False,
-            "message": str(e)
+            "message": "An error occurred while refreshing alerts"
         }, status_code=500)
 
 @app.get("/reset-db")
