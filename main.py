@@ -214,6 +214,51 @@ def reload_json():
     res = load_alerts_from_json("alerts.json")
     return res
 
+@app.get("/refresh-alerts")
+def refresh_alerts():
+    """Run the scraper to fetch fresh alerts, then reload into DB."""
+    import subprocess
+    try:
+        logger.info("Running scraper to fetch fresh alerts...")
+        result = subprocess.run(
+            ["python", "incois_scraper.py"],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        if result.returncode != 0:
+            logger.error(f"Scraper failed: {result.stderr}")
+            return JSONResponse({
+                "ok": False, 
+                "message": "Scraper failed",
+                "stderr": result.stderr
+            }, status_code=500)
+        
+        # Now reload the alerts from the updated JSON file
+        load_result = load_alerts_from_json("alerts.json")
+        logger.info("Successfully refreshed alerts from scraper")
+        
+        return {
+            "ok": True,
+            "message": "Alerts refreshed successfully",
+            "scraper_output": result.stdout,
+            "load_result": load_result
+        }
+        
+    except subprocess.TimeoutExpired:
+        logger.error("Scraper timeout")
+        return JSONResponse({
+            "ok": False,
+            "message": "Scraper timeout (>60s)"
+        }, status_code=500)
+    except Exception as e:
+        set_last_error(e)
+        return JSONResponse({
+            "ok": False,
+            "message": str(e)
+        }, status_code=500)
+
 @app.get("/reset-db")
 def reset_db():
     ok, msg = recreate_db()

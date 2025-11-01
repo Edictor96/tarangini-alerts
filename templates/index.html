@@ -148,6 +148,10 @@
   <section class="hero">
     <h2>Coastal Safety Alerts</h2>
     <p>Stay informed and stay safe – live updates on natural hazards</p>
+    <button id="refreshBtn" onclick="refreshAlerts()" style="margin-top: 15px; padding: 10px 20px; background: #fff; color: #0a2470; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s;">
+      🔄 Refresh Alerts
+    </button>
+    <div id="refreshStatus" style="margin-top: 10px; font-size: 14px;"></div>
   </section>
 
   <!-- Alerts Grid -->
@@ -214,6 +218,46 @@
         console.error("Error loading alerts:", e);
         document.getElementById("alerts").innerHTML =
           "<p>⚠️ Failed to load alerts</p>";
+      }
+    }
+
+    async function refreshAlerts() {
+      const btn = document.getElementById("refreshBtn");
+      const status = document.getElementById("refreshStatus");
+      
+      // Disable button and show loading
+      btn.disabled = true;
+      btn.textContent = "⏳ Refreshing...";
+      status.textContent = "Fetching latest alerts from INCOIS...";
+      status.style.color = "#ffeb3b";
+      
+      try {
+        const res = await fetch("/refresh-alerts");
+        const data = await res.json();
+        
+        if (data.ok) {
+          status.textContent = "✅ Alerts refreshed successfully!";
+          status.style.color = "#4caf50";
+          
+          // Reload alerts on the page
+          await loadAlerts();
+        } else {
+          status.textContent = `❌ ${data.message}`;
+          status.style.color = "#f44336";
+        }
+      } catch (e) {
+        console.error("Error refreshing alerts:", e);
+        status.textContent = "❌ Failed to refresh alerts";
+        status.style.color = "#f44336";
+      } finally {
+        // Re-enable button
+        btn.disabled = false;
+        btn.textContent = "🔄 Refresh Alerts";
+        
+        // Clear status after 5 seconds
+        setTimeout(() => {
+          status.textContent = "";
+        }, 5000);
       }
     }
     loadAlerts();
