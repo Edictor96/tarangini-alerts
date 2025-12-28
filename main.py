@@ -1,5 +1,6 @@
 # main.py
 import os
+import sys
 import json
 import logging
 import math
@@ -152,7 +153,7 @@ def load_alerts_from_json(file_path: str = "alerts.json"):
         return {"inserted": inserted, "skipped": skipped, "skipped_details": skipped_details}
     except Exception as e:
         set_last_error(e)
-        return {"error": str(e), "trace": last_error.get("trace")}
+        return {"error": str(e)}
 
 # ---------------- routes ----------------
 
@@ -213,6 +214,57 @@ def reload_json():
     """Manual reload: load alerts.json into DB and return summary."""
     res = load_alerts_from_json("alerts.json")
     return res
+
+@app.get("/refresh-alerts")
+def refresh_alerts():
+    """Run the scraper to fetch fresh alerts, then reload into DB."""
+    import subprocess
+    try:
+        logger.info("Running scraper to fetch fresh alerts...")
+        result = subprocess.run(
+            [sys.executable, "incois_scraper.py"],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        
+        if result.returncode != 0:
+            logger.error(f"Scraper failed: {result.stderr}")
+            return JSONResponse({
+                "ok": False, 
+                "message": "Scraper failed - check server logs for details"
+            }, status_code=500)
+        
+        # Now reload the alerts from the updated JSON file
+        load_result = load_alerts_from_json("alerts.json")
+        logger.info("Successfully refreshed alerts from scraper")
+        
+        # Don't expose internal error details to users
+        if "error" in load_result:
+            return JSONResponse({
+                "ok": False,
+                "message": "Failed to load alerts - check server logs"
+            }, status_code=500)
+        
+        return {
+            "ok": True,
+            "message": "Alerts refreshed successfully",
+            "inserted": load_result.get("inserted", 0),
+            "skipped": load_result.get("skipped", 0)
+        }
+        
+    except subprocess.TimeoutExpired:
+        logger.error("Scraper timeout")
+        return JSONResponse({
+            "ok": False,
+            "message": "Scraper timeout (>120s)"
+        }, status_code=500)
+    except Exception as e:
+        set_last_error(e)
+        return JSONResponse({
+            "ok": False,
+            "message": "An error occurred while refreshing alerts"
+        }, status_code=500)
 
 @app.get("/reset-db")
 def reset_db():
